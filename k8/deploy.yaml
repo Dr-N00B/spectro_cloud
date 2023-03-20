@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: assignment
+
+---
+#  Create config map and entry to skip deployment deletion
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: assignment-config
+  namespace: assignment
+data:
+  skip-deployments: "coredns"
+
+---
+# create cluster role to use RBAC. Because default RBAC policies grant scoped permissions to control-plane components, nodes, and controllers, but grant no permissions to service accounts outside the "kube-system" namespace like deployments, pods.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: assignment-role
+rules:
+- apiGroups: ["","apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "delete"]
+
+---
+
+# Create a new service account to bind the cluster role to. 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: assignment-sa
+  namespace: assignment
+
+---
+# create binding between cluster role and service account
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: assignment-role-binding
+subjects:
+- kind: ServiceAccount
+  name: assignment-sa
+  namespace: assignment
+roleRef:
+  kind: ClusterRole
+  name: assignment-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# create pod only. It should not be part of a deployment.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: assignment-pod
+  namespace: assignment
+
+spec:
+  serviceAccountName: assignment-sa # use custom service account
+  containers:
+  - name: assignment
+    image: arun0110/spectro_cloud:v1.0
+    imagePullPolicy: Always
+    env:
+      - name: SKIP_DEPLOYMENTS
+        valueFrom:
+          configMapKeyRef:
+            name: assignment-config
+            key: skip-deployments
+  restartPolicy: Never
