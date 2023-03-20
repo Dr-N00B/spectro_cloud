@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -15,40 +14,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/util/homedir"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-func getConfig() (*rest.Config, error) {
-
-	var kubeconfig *string
-
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
-
-	config, err := rest.InClusterConfig()
-	if err == nil {
-		return config, nil
-	}
-
-	if err != rest.ErrNotInCluster {
-		return nil, err
-	}
-
-	// use the current context in kubeconfig
-	config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
 
 func contains(In []string, find string) bool {
 	for _, v := range In {
