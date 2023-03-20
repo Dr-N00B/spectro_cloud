@@ -24,8 +24,17 @@ build_image:
 deploy:
 	kubectl apply -f $(POD_FILE)
 
-delete:
+delete: delete_pod delete_tests
+
+delete_pod:
 	kubectl delete -f $(POD_FILE)
+
+tests: $(TEST_DIR)/*
+	@for file in $^ ; do kubectl apply -f $${file} ; done
+
+
+
+cleanall: clean clean_image delete_tests 
 
 clean:
 	rm -rf ./bin
@@ -33,10 +42,6 @@ clean:
 clean_image:
 	docker rmi $(REGISTRY_URL)/$(REPO_WITH_TAG)
 
-cleanall: clean clean_image delete_tests
-
 delete_tests: $(TEST_DIR)/*
 	@for file in $^ ; do kubectl delete -f $${file} ; done
  
-tests: $(TEST_DIR)/*
-	@for file in $^ ; do kubectl apply -f $${file} ; done

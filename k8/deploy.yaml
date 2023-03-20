@@ -62,7 +62,9 @@ spec:
   containers:
   - name: assignment
     image: arun0110/spectro_cloud:v1.0
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
+    command: [ "./assignment"]
+    args: []
     env:
       - name: SKIP_DEPLOYMENTS
         valueFrom:
