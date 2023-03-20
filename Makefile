@@ -27,9 +27,13 @@ deploy:
 delete:
 	kubectl delete -f $(POD_FILE)
 
-clean: delete_tests
+clean:
 	rm -rf ./bin
+
+clean_image:
 	docker rmi $(REGISTRY_URL)/$(REPO_WITH_TAG)
+
+cleanall: clean clean_image delete_tests
 
 delete_tests: $(TEST_DIR)/*
 	@for file in $^ ; do kubectl delete -f $${file} ; done
