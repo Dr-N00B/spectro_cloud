@@ -68,7 +68,7 @@ spec:
       serviceAccountName: assignment-sa # use custom service account
       containers:
       - name: assignment
-        image: arun0110/spectro_cloud:v1.0
+        image: arun0110/spectro_cloud:v2.0
         imagePullPolicy: Always
         command: [ "./assignment"]
         args: []
