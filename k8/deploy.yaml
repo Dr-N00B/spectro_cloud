@@ -21,7 +21,7 @@ metadata:
   name: assignment-role
 rules:
 - apiGroups: ["","apps"]
-  resources: ["deployments"]
+  resources: ["deployments","pods","replicasets"]
   verbs: ["get", "list", "watch", "delete"]
 
 ---
@@ -50,25 +50,39 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 
 ---
-# create pod only. It should not be part of a deployment.
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: assignment-pod
+  name: assignment-deployment
   namespace: assignment
-
 spec:
-  serviceAccountName: assignment-sa # use custom service account
-  containers:
-  - name: assignment
-    image: arun0110/spectro_cloud:v1.0
-    imagePullPolicy: IfNotPresent
-    command: [ "./assignment"]
-    args: []
-    env:
-      - name: SKIP_DEPLOYMENTS
-        valueFrom:
-          configMapKeyRef:
-            name: assignment-config
-            key: skip-deployments
-  restartPolicy: Never
+  selector:
+    matchLabels:
+      app: assignment-pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: assignment-pod
+    spec:
+      serviceAccountName: assignment-sa # use custom service account
+      containers:
+      - name: assignment
+        image: arun0110/spectro_cloud:v1.0
+        imagePullPolicy: Always
+        command: [ "./assignment"]
+        args: []
+        env:
+          - name: SKIP_DEPLOYMENTS
+            valueFrom:
+              configMapKeyRef:
+                name: assignment-config
+                key: skip-deployments
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
